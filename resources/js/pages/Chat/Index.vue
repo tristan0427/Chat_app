@@ -231,7 +231,7 @@ onBeforeUnmount(stopPolling);
 
 const activeTitle = computed(() => {
     if (state.activeType === 'global') return 'Global Chat';
-    if (state.activeType === 'profile') return 'Profile Settings';
+    if (state.activeType === 'profile') return '';
     const u = state.users.find(u => u.id === state.activeUserId);
     return u ? `Chat with ${u.name}` : 'Direct Chat';
 });
@@ -242,6 +242,16 @@ const avatarPreviewUrl = computed(() => {
     }
     return '';
 });
+
+async function logout() {
+    await fetch('/logout', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrf(),
+        },
+    });
+    window.location.href = '/';
+}
 
 </script>
 
@@ -266,18 +276,31 @@ const avatarPreviewUrl = computed(() => {
                 <div class="flex gap-4 h-960 md:h-[80vh]">
                     <aside class="basis-2/5 border-r pr-4">
                         <div class="mb-4">
-                            <button class="w-50 text-left px-4 py-3 rounded-xl bg-pink-50 hover:bg-pink-100 font-medium text-black flex items-center gap-3"
-                                    @click="pickProfile">
-                                <img
-                                    v-if="$page.props.auth.user.avatar"
-                                    :src="`/storage/${$page.props.auth.user.avatar}`"
-                                    class="w-7 h-7 rounded-full object-cover"
-                                    alt="User avatar"
-                                />
-                                <span v-else class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-base font-bold text-indigo-700">
-                                {{ $page.props.auth.user.name.substring(0,1).toUpperCase() }}</span>
-                                Profile Settings
-                            </button>
+                            <div class="flex items-center justify-between">
+                                <button class="flex-1 text-left px-4 py-3 rounded-xl bg-pink-50 hover:bg-pink-100 font-medium text-black flex items-center gap-3"
+                                        @click="pickProfile">
+                                    <img
+                                        v-if="$page.props.auth.user.avatar"
+                                        :src="`/storage/${$page.props.auth.user.avatar}`"
+                                        class="w-7 h-7 rounded-full object-cover"
+                                        alt="User avatar"
+                                    />
+                                    <span v-else class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-base font-bold text-indigo-700">
+                                        {{ $page.props.auth.user.name.substring(0,1).toUpperCase() }}
+            </span>
+                                    Profile Settings
+                                </button>
+
+                                <!-- Logout Icon Button -->
+                                <button @click="logout"
+                                        class="ml-2 w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-600 hover:text-red-700 transition-colors"
+                                        title="Logout">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                         <div class="mb-4">
                             <button
@@ -340,6 +363,17 @@ const avatarPreviewUrl = computed(() => {
                         </template>
 
                         <template v-else>
+                            <div class="flex items-center justify-between pb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Profile Settings</h3>
+                            <button @click="pickGlobal"
+                                    class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors"
+                                    title="Close">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
                             <form @submit.prevent="updateProfile" class="space-y-4 text-black">
                                 <div class="flex flex-col items-center">
                                     <img
@@ -390,7 +424,7 @@ const avatarPreviewUrl = computed(() => {
                                 </div>
 
                                 <button type="submit"
-                                        class="px-4 py-2 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-lg hover:from-pink-600 hover:to-red-600">
+                                        class="px-4 py-2 bg-red-500 text-white rounded-lg hover:from-pink-600 hover:to-red-600">
                                     Save Changes
                                 </button>
                             </form>
