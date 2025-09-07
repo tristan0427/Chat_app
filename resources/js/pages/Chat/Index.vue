@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, reactive, computed, nextTick } from 'vue';
+import {onMounted, onBeforeUnmount, reactive, computed, nextTick} from 'vue';
 import { Head, usePage } from '@inertiajs/vue3';
 
 // Types
@@ -163,7 +163,7 @@ async function updateProfile() {
         formData.append('avatar', state.profileForm.avatar);
     }
 
-    const res = await fetch('/profile', {
+    const res = await fetch('/profile/update', {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': csrf(),
@@ -172,7 +172,17 @@ async function updateProfile() {
     });
 
     if (res.ok) {
-        window.location.reload();
+        try {
+            const data = await res.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                console.error('Profile update failed:', data);
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            window.location.reload();
+        }
     } else {
         console.error('Profile update failed:', await res.text());
     }
@@ -232,6 +242,7 @@ const avatarPreviewUrl = computed(() => {
     }
     return '';
 });
+
 </script>
 
 
@@ -252,10 +263,22 @@ const avatarPreviewUrl = computed(() => {
         <div class="w-full max-w-6xl relative z-10">
             <div class="bg-white rounded-3xl shadow-xl p-4 md:p-6 border border-white/20">
 
-                <div class="flex gap-4">
-
-                    <!-- Sidebar 40% -->
+                <div class="flex gap-4 h-960 md:h-[80vh]">
                     <aside class="basis-2/5 border-r pr-4">
+                        <div class="mb-4">
+                            <button class="w-50 text-left px-4 py-3 rounded-xl bg-pink-50 hover:bg-pink-100 font-medium text-black flex items-center gap-3"
+                                    @click="pickProfile">
+                                <img
+                                    v-if="$page.props.auth.user.avatar"
+                                    :src="`/storage/${$page.props.auth.user.avatar}`"
+                                    class="w-7 h-7 rounded-full object-cover"
+                                    alt="User avatar"
+                                />
+                                <span v-else class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-base font-bold text-indigo-700">
+                                {{ $page.props.auth.user.name.substring(0,1).toUpperCase() }}</span>
+                                Profile Settings
+                            </button>
+                        </div>
                         <div class="mb-4">
                             <button
                                 class="w-full text-left text-black px-4 py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 font-medium"
@@ -282,15 +305,8 @@ const avatarPreviewUrl = computed(() => {
                                 </button>
                             </li>
                         </ul>
-                        <div>
-                            <button class="w-full text-left px-4 py-3 rounded-xl bg-pink-50 hover:bg-pink-100 font-medium text-black"
-                                    @click="pickProfile">
-                                ⚙️ Profile Settings
-                            </button>
-                        </div>
                     </aside>
 
-                    <!-- Chat area 60% -->
                     <section class="basis-3/5 flex flex-col">
                         <header class="px-2 pb-3 border-b mb-3">
                             <h2 class="text-lg font-semibold text-gray-800">{{ activeTitle }}</h2>
@@ -302,6 +318,9 @@ const avatarPreviewUrl = computed(() => {
                                      :class="m.sender_id === $page.props.auth.user.id ? 'justify-end' : 'justify-start'">
                                     <div :class="m.sender_id === $page.props.auth.user.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-800'"
                                          class="max-w-[80%] px-4 py-2 rounded-2xl">
+                                        <div v-if="m.sender_id !== $page.props.auth.user.id" class="text-xs font-semibold mb-1">
+                                            {{ m.sender?.name }}
+                                        </div>
                                         <div class="text-sm whitespace-pre-wrap">{{ m.body }}</div>
                                         <div class="text-[10px] opacity-70 mt-1">{{ new Date(m.created_at).toLocaleString() }}</div>
                                     </div>
@@ -322,7 +341,6 @@ const avatarPreviewUrl = computed(() => {
 
                         <template v-else>
                             <form @submit.prevent="updateProfile" class="space-y-4 text-black">
-                                <!-- Avatar Preview -->
                                 <div class="flex flex-col items-center">
                                     <img
                                         v-if="state.profileForm.avatar"
@@ -330,11 +348,16 @@ const avatarPreviewUrl = computed(() => {
                                         class="w-24 h-24 rounded-full object-cover mb-2"
                                         alt="Avatar preview"
                                     />
-                                    <img
-                                        v-else
-                                        :src="`/storage/${$page.props.auth.user.avatar ?? 'default-avatar.png'}`"
-                                        class="w-24 h-24 rounded-full object-cover mb-2"
-                                     alt=""/>
+                                    <template v-else>
+                                        <img
+                                            v-if="$page.props.auth.user.avatar"
+                                            :src="`/storage/${$page.props.auth.user.avatar}`"
+                                            class="w-24 h-24 rounded-full object-cover mb-2"
+                                            alt="User avatar" />
+                                        <div v-else class="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-4xl font-bold text-indigo-700 mb-2">
+                                            {{ $page.props.auth.user.name.substring(0,1).toUpperCase() }}
+                                        </div>
+                                    </template>
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -342,29 +365,24 @@ const avatarPreviewUrl = computed(() => {
                                         class="mt-2 text-sm"
                                     />
                                 </div>
-
-                                <!-- Name -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Name</label>
                                     <input v-model="state.profileForm.name" type="text"
                                            class="mt-1 block w-full border rounded-lg px-3 py-2" />
                                 </div>
 
-                                <!-- Email -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Email</label>
                                     <input v-model="state.profileForm.email" type="email"
                                            class="mt-1 block w-full border rounded-lg px-3 py-2" />
                                 </div>
 
-                                <!-- Password -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">New Password</label>
                                     <input v-model="state.profileForm.password" type="password"
                                            class="mt-1 block w-full border rounded-lg px-3 py-2" />
                                 </div>
 
-                                <!-- Confirm Password -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
                                     <input v-model="state.profileForm.password_confirmation" type="password"

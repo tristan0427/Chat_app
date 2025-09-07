@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('sender_id')->constrained('users')->cascadeOnDelete();
-            // If receiver_id is NULL => it's a GLOBAL message.
             $table->foreignId('receiver_id')->nullable()->constrained('users')->nullOnDelete();
             $table->text('body');
             $table->timestamps();

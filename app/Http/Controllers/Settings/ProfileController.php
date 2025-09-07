@@ -44,6 +44,11 @@ class ProfileController extends Controller
 
         $user->save();
 
+        // Return JSON for AJAX, else redirect
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'user' => $user]);
+        }
+
         return to_route('profile.edit');
     }
 

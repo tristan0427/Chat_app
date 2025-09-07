@@ -19,6 +19,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/chat/users', [ChatController::class, 'users'])->name('chat.users');
     Route::get('/chat/messages', [ChatController::class, 'messages'])->name('chat.messages');
     Route::post('/chat/messages', [ChatController::class, 'store'])->name('chat.messages.store');
+    Route::post('/profile/update', [\App\Http\Controllers\Settings\ProfileController::class, 'update'])->name('profile.update');
 });
 
 require __DIR__.'/settings.php';
