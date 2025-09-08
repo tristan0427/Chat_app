@@ -7,9 +7,9 @@ use Inertia\Inertia;
 
 Route::get('/', [UIController::class, 'index'])->name('home');
 
-//Route::get('dashboard', function () {
-//    return Inertia::render('Dashboard');
-//})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('dashboard', function () {
+    return Inertia::render('Dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -19,7 +19,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/chat/users', [ChatController::class, 'users'])->name('chat.users');
     Route::get('/chat/messages', [ChatController::class, 'messages'])->name('chat.messages');
     Route::post('/chat/messages', [ChatController::class, 'store'])->name('chat.messages.store');
-    Route::post('/profile/update', [\App\Http\Controllers\Settings\ProfileController::class, 'update'])->name('profile.update');
 });
 
 require __DIR__.'/settings.php';

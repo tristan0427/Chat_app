@@ -163,7 +163,8 @@ async function updateProfile() {
         formData.append('avatar', state.profileForm.avatar);
     }
 
-    const res = await fetch('/profile/update', {
+    formData.append('_method', 'PATCH');
+    const res = await fetch('/settings/profile', {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': csrf(),
